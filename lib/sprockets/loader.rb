@@ -89,6 +89,12 @@ module Sprockets
             asset[:metadata][k].map! { |uri| expand_from_root(uri) }
           end
         end
+
+        # CORE-2224: Adding a mechanism to break cache of all assets by bumping a version
+        if ::Rails.configuration.assets.force_bump_assets_version.present?
+          asset[:metadata][:digest] = digest(::Rails.configuration.assets.force_bump_assets_version + asset[:metadata][:digest])
+        end
+
         asset
       end
 
@@ -145,7 +151,6 @@ module Sprockets
           source = result.delete(:data)
           metadata = result
           metadata[:charset] = source.encoding.name.downcase unless metadata.key?(:charset)
-          metadata[:digest] = digest(self.version + source)
           metadata[:length]  = source.bytesize
         else
           dependencies << build_file_digest_uri(unloaded.filename)
